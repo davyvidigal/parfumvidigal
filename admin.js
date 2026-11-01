@@ -84,7 +84,7 @@ function refreshChargeProductOptions() {
 
   container.innerHTML = "";
 
-  getProducts().forEach(product => {
+  getProductsAlphabetically().forEach(product => {
     const row = document.createElement("div");
 
     row.style.cssText = `
@@ -108,7 +108,6 @@ function refreshChargeProductOptions() {
 
     const name = document.createElement("span");
     name.textContent = product.name;
-
     label.append(checkbox, name);
 
     const quantity = document.createElement("input");
@@ -206,6 +205,16 @@ function getProducts() {
     console.error("Erro ao carregar produtos:", error);
     return DEFAULT_PRODUCTS;
   }
+}
+
+// ORDENAR PRODUTOS EM ORDEM ALFABÉTICA
+function getProductsAlphabetically() {
+  return getProducts().slice().sort((a, b) =>
+    String(a.name || "").localeCompare(String(b.name || ""), "pt-BR", {
+      sensitivity: "base",
+      numeric: true
+    })
+  );
 }
 
 function saveProducts(products) {
@@ -317,7 +326,7 @@ function renderAdmin() {
     return;
   }
 
-  const products = getProducts();
+  const products = getProductsAlphabetically();
   productsContainer.innerHTML = "";
 
   if (products.length === 0) {
@@ -376,6 +385,7 @@ function renderAdmin() {
   });
 }
 // CADASTRAR E ATUALIZAR PRODUTOS
+
 productForm.addEventListener("submit", async function(event) {
   event.preventDefault();
 
@@ -531,6 +541,7 @@ cancelButton.addEventListener("click", function() {
 });
 
 // BLOCO DE NOTAS E COBRANÇAS
+
 function getCharges() {
   try {
     const saved = localStorage.getItem(CHARGES_KEY);
@@ -714,7 +725,6 @@ chargeForm.addEventListener("submit", function(event) {
     );
 
     const row = checkbox.closest("div");
-
     const quantityInput = row
       ? row.querySelector(".charge-product-quantity")
       : null;
@@ -762,7 +772,7 @@ chargeForm.addEventListener("submit", function(event) {
     description,
     products: selectedProducts,
 
-    // Compatibilidade com cobranças antigas.
+    // Compatibilidade com cobranças antigas e vendas de um só perfume.
     productId: selectedProducts.length === 1 ? selectedProducts[0].id : null,
     productName: selectedProducts.length === 1 ? selectedProducts[0].name : "",
     quantity: selectedProducts.length === 1 ? selectedProducts[0].quantity : 0,
@@ -1070,7 +1080,6 @@ function exportReportsCSV() {
   );
 
   const sales = buildSalesReport(paidCharges, products);
-
   const interest = getInterestData();
 
   const rows = [
