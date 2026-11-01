@@ -49,17 +49,28 @@ const chargeForm = document.getElementById("charge-form");
 const chargeList = document.getElementById("charge-list");
 const chargeMessage = document.getElementById("charge-message");
 
-// CAMPOS DE PRODUTO DA COBRANÇA
+// SELEÇÃO DE VÁRIOS PERFUMES NA MESMA COMPRA
 const chargeProductField = document.createElement("div");
+chargeProductField.id = "charge-products-field";
+chargeProductField.style.cssText = `
+  margin:16px 0;
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  background:#fafafa;
+`;
 
 chargeProductField.innerHTML = `
-  <label for="charge-product">Produto da venda</label>
-  <select id="charge-product">
-    <option value="">Venda sem produto identificado</option>
-  </select>
-
-  <label for="charge-quantity">Quantidade</label>
-  <input type="number" id="charge-quantity" min="1" step="1" value="1">
+  <label style="display:block;font-weight:700;margin-bottom:6px;">
+    Perfumes vendidos nesta compra
+  </label>
+  <p style="margin:0 0 12px;color:#666;font-size:13px;">
+    Marque todos os perfumes comprados e informe a quantidade de cada um.
+  </p>
+  <div id="charge-products-options"></div>
+  <p id="charge-products-selected" style="margin:10px 0 0;font-size:13px;font-weight:600;">
+    Nenhum perfume selecionado
+  </p>
 `;
 
 chargeForm.insertBefore(
@@ -68,33 +79,80 @@ chargeForm.insertBefore(
 );
 
 function refreshChargeProductOptions() {
-  const select = document.getElementById("charge-product");
-  if (!select) return;
+  const container = document.getElementById("charge-products-options");
+  if (!container) return;
 
-  const current = select.value;
-
-  select.innerHTML = `
-    <option value="">Venda sem produto identificado</option>
-  `;
+  container.innerHTML = "";
 
   getProducts().forEach(product => {
-    const option = document.createElement("option");
-    option.value = String(product.id);
-    option.textContent = product.name;
-    select.appendChild(option);
+    const row = document.createElement("div");
+
+    row.style.cssText = `
+      display:flex;align-items:center;gap:10px;margin:8px 0;
+      padding:9px;background:#fff;border:1px solid #e5e5e5;
+      border-radius:7px;flex-wrap:wrap;
+    `;
+
+    const label = document.createElement("label");
+
+    label.style.cssText = `
+      display:flex;align-items:center;gap:7px;
+      flex:1;min-width:180px;margin:0;
+    `;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "charge-product-checkbox";
+    checkbox.value = String(product.id);
+    checkbox.style.width = "auto";
+
+    const name = document.createElement("span");
+    name.textContent = product.name;
+
+    label.append(checkbox, name);
+
+    const quantity = document.createElement("input");
+    quantity.type = "number";
+    quantity.className = "charge-product-quantity";
+    quantity.min = "1";
+    quantity.step = "1";
+    quantity.value = "1";
+    quantity.title = "Quantidade deste perfume";
+    quantity.setAttribute("aria-label", "Quantidade de " + product.name);
+    quantity.style.cssText = "width:85px;margin:0;";
+    quantity.disabled = true;
+
+    checkbox.addEventListener("change", () => {
+      quantity.disabled = !checkbox.checked;
+      updateSelectedChargeProducts();
+    });
+
+    row.append(label, quantity);
+    container.appendChild(row);
   });
 
-  if ([...select.options].some(option => option.value === current)) {
-    select.value = current;
+  updateSelectedChargeProducts();
+}
+
+function updateSelectedChargeProducts() {
+  const selected = document.querySelectorAll(
+    ".charge-product-checkbox:checked"
+  );
+
+  const summary = document.getElementById("charge-products-selected");
+
+  if (summary) {
+    summary.textContent = selected.length
+      ? `${selected.length} perfume(s) diferente(s) selecionado(s)`
+      : "Nenhum perfume selecionado";
   }
 }
 
+refreshChargeProductOptions();
+
 let selectedImage = "";
 
-// =====================================
 // LOGIN
-// =====================================
-
 function isAuthenticated() {
   return sessionStorage.getItem(SESSION_KEY) === "true";
 }
@@ -134,10 +192,7 @@ document.getElementById("logout-button").addEventListener("click", function() {
   showLogin();
 });
 
-// =====================================
 // PRODUTOS
-// =====================================
-
 function getProducts() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -164,10 +219,7 @@ function saveProducts(products) {
   }
 }
 
-// =====================================
 // IMAGENS
-// =====================================
-
 function convertImage(file) {
   return new Promise((resolve, reject) => {
     if (!file) {
@@ -250,10 +302,7 @@ imageInput.addEventListener("change", async function() {
   }
 });
 
-// =====================================
 // AUXILIARES
-// =====================================
-
 function formatPrice(price) {
   return Number(price).toLocaleString("pt-BR", {
     style: "currency",
@@ -261,10 +310,7 @@ function formatPrice(price) {
   });
 }
 
-// =====================================
 // EXIBIR PRODUTOS
-// =====================================
-
 function renderAdmin() {
   if (!isAuthenticated()) {
     showLogin();
@@ -329,11 +375,7 @@ function renderAdmin() {
     productsContainer.appendChild(card);
   });
 }
-
-// =====================================
 // CADASTRAR E ATUALIZAR PRODUTOS
-// =====================================
-
 productForm.addEventListener("submit", async function(event) {
   event.preventDefault();
 
@@ -488,10 +530,7 @@ cancelButton.addEventListener("click", function() {
   formMessage.textContent = "";
 });
 
-// =====================================
 // BLOCO DE NOTAS E COBRANÇAS
-// =====================================
-
 function getCharges() {
   try {
     const saved = localStorage.getItem(CHARGES_KEY);
@@ -585,6 +624,15 @@ function renderCharges() {
     const description = document.createElement("p");
     description.textContent = charge.description || "Sem observações.";
 
+    const productsLine = document.createElement("p");
+    const chargeItems = getChargeProducts(charge, getProducts());
+
+    productsLine.textContent = chargeItems.length
+      ? "Perfumes: " + chargeItems.map(item =>
+          `${item.product.name} (${item.quantity} un.)`
+        ).join(", ")
+      : "Perfumes: não informados";
+
     const date = document.createElement("p");
     date.textContent = "Registrado em: " + charge.createdAt;
 
@@ -635,6 +683,7 @@ function renderCharges() {
       phone,
       value,
       description,
+      productsLine,
       date,
       status,
       actions
@@ -643,7 +692,7 @@ function renderCharges() {
     chargeList.appendChild(card);
   });
 }
-// CADASTRAR COBRANÇA
+// CADASTRAR COBRANÇA COM VÁRIOS PERFUMES
 chargeForm.addEventListener("submit", function(event) {
   event.preventDefault();
 
@@ -657,16 +706,25 @@ chargeForm.addEventListener("submit", function(event) {
   const amount = Number(document.getElementById("charge-amount").value);
   const description = document.getElementById("charge-description").value.trim();
 
-  const productId = document.getElementById("charge-product").value;
+  const selectedProducts = [
+    ...document.querySelectorAll(".charge-product-checkbox:checked")
+  ].map(checkbox => {
+    const product = getProducts().find(
+      item => String(item.id) === checkbox.value
+    );
 
-  const quantity = Math.max(
-    1,
-    parseInt(document.getElementById("charge-quantity").value, 10) || 1
-  );
+    const row = checkbox.closest("div");
 
-  const selectedProduct = productId
-    ? getProducts().find(product => String(product.id) === String(productId))
-    : null;
+    const quantityInput = row
+      ? row.querySelector(".charge-product-quantity")
+      : null;
+
+    return product ? {
+      id: product.id,
+      name: product.name,
+      quantity: Math.max(1, parseInt(quantityInput?.value, 10) || 1)
+    } : null;
+  }).filter(Boolean);
 
   const whatsappNumber = formatWhatsAppNumber(phone);
 
@@ -688,6 +746,12 @@ chargeForm.addEventListener("submit", function(event) {
     return;
   }
 
+  if (selectedProducts.length === 0) {
+    chargeMessage.style.color = "red";
+    chargeMessage.textContent = "Selecione pelo menos um perfume vendido.";
+    return;
+  }
+
   const charges = getCharges();
 
   const newCharge = {
@@ -696,10 +760,12 @@ chargeForm.addEventListener("submit", function(event) {
     phone,
     amount,
     description,
+    products: selectedProducts,
 
-    productId: selectedProduct ? selectedProduct.id : null,
-    productName: selectedProduct ? selectedProduct.name : "",
-    quantity: selectedProduct ? quantity : 0,
+    // Compatibilidade com cobranças antigas.
+    productId: selectedProducts.length === 1 ? selectedProducts[0].id : null,
+    productName: selectedProducts.length === 1 ? selectedProducts[0].name : "",
+    quantity: selectedProducts.length === 1 ? selectedProducts[0].quantity : 0,
 
     paid: false,
     createdAt: new Date().toLocaleDateString("pt-BR")
@@ -710,8 +776,19 @@ chargeForm.addEventListener("submit", function(event) {
   if (saveCharges(charges)) {
     chargeForm.reset();
 
+    document.querySelectorAll(".charge-product-checkbox").forEach(input => {
+      input.checked = false;
+    });
+
+    document.querySelectorAll(".charge-product-quantity").forEach(input => {
+      input.value = "1";
+      input.disabled = true;
+    });
+
+    updateSelectedChargeProducts();
+
     chargeMessage.style.color = "green";
-    chargeMessage.textContent = "Cobrança cadastrada com sucesso!";
+    chargeMessage.textContent = "Compra cadastrada com sucesso!";
 
     renderCharges();
   }
@@ -733,7 +810,10 @@ function sendWhatsAppCharge(charge) {
     "Aqui é da *Parfum Vidigal*.\n\n" +
     "Estamos entrando em contato para lembrar sobre o pagamento:\n\n" +
     "*Valor:* " + formatPrice(charge.amount) + "\n" +
-    "*Referente a:* " + (charge.description || "Compra na Parfum Vidigal") + "\n\n" +
+    "*Referente a:* " + (charge.description || "Compra na Parfum Vidigal") + "\n" +
+    "*Perfumes:* " + getChargeProducts(charge, getProducts()).map(item =>
+      item.product.name + " (" + item.quantity + " un.)"
+    ).join(", ") + "\n\n" +
     "Caso já tenha realizado o pagamento, por favor desconsidere esta mensagem.\n\n" +
     "Agradecemos pela preferência! ❤️";
 
@@ -779,10 +859,7 @@ function deleteCharge(id) {
   }
 }
 
-// =====================================
 // RELATÓRIOS DE VENDAS E INTERESSE
-// =====================================
-
 const INTEREST_KEY = "parfumvidigal_product_interest";
 
 function getInterestData() {
@@ -798,32 +875,89 @@ function getInterestData() {
   }
 }
 
-// IDENTIFICAR PRODUTO DA COBRANÇA
-function getChargeProduct(charge, products) {
+// IDENTIFICAR TODOS OS PRODUTOS DA COBRANÇA
+function getChargeProducts(charge, products) {
+  // Novo formato: vários perfumes na mesma compra.
+  if (Array.isArray(charge.products) && charge.products.length) {
+    return charge.products.map(item => ({
+      product: products.find(
+        product => String(product.id) === String(item.id)
+      ) || {
+        id: item.id,
+        name: item.name || "Produto removido"
+      },
+      quantity: Math.max(1, Number(item.quantity) || 1)
+    }));
+  }
+
+  // Compatibilidade com cobranças antigas de um único perfume.
   if (
     charge.productId !== undefined &&
     charge.productId !== null &&
     charge.productId !== ""
   ) {
-    return products.find(
-      product => String(product.id) === String(charge.productId)
-    ) || {
-      id: charge.productId,
-      name: charge.productName || "Produto removido"
-    };
+    return [{
+      product: products.find(
+        product => String(product.id) === String(charge.productId)
+      ) || {
+        id: charge.productId,
+        name: charge.productName || "Produto removido"
+      },
+      quantity: Math.max(1, Number(charge.quantity) || 1)
+    }];
   }
 
-  // Tenta identificar cobranças antigas pela descrição.
-  const description = String(
-    charge.description || ""
-  ).toLocaleLowerCase("pt-BR");
+  // Última tentativa para registros antigos.
+  const description = String(charge.description || "").toLocaleLowerCase("pt-BR");
 
-  return products.find(product =>
+  const found = products.find(product =>
     product.name &&
-    description.includes(
-      String(product.name).toLocaleLowerCase("pt-BR")
-    )
-  ) || null;
+    description.includes(String(product.name).toLocaleLowerCase("pt-BR"))
+  );
+
+  return found
+    ? [{ product: found, quantity: Math.max(1, Number(charge.quantity) || 1) }]
+    : [];
+}
+
+// SOMAR PRODUTOS VENDIDOS
+function buildSalesReport(paidCharges, products) {
+  const sales = {};
+
+  paidCharges.forEach(charge => {
+    const items = getChargeProducts(charge, products);
+    if (!items.length) return;
+
+    const totalUnits = items.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+
+    const amount = Number(charge.amount) || 0;
+
+    items.forEach(({ product, quantity }) => {
+      const key = String(product.id);
+
+      if (!sales[key]) {
+        sales[key] = {
+          name: product.name,
+          quantity: 0,
+          revenue: 0,
+          orders: 0
+        };
+      }
+
+      sales[key].quantity += quantity;
+
+      sales[key].revenue += totalUnits > 0
+        ? amount * (quantity / totalUnits)
+        : 0;
+
+      sales[key].orders += 1;
+    });
+  });
+
+  return Object.values(sales);
 }
 
 // MOSTRAR RELATÓRIOS
@@ -845,35 +979,7 @@ function renderReports() {
     charge => charge.paid
   );
 
-  const sales = {};
-
-  paidCharges.forEach(charge => {
-    const product = getChargeProduct(charge, products);
-
-    if (!product) return;
-
-    const key = String(product.id);
-
-    if (!sales[key]) {
-      sales[key] = {
-        name: product.name,
-        quantity: 0,
-        revenue: 0,
-        orders: 0
-      };
-    }
-
-    const quantity = Math.max(
-      1,
-      Number(charge.quantity) || 1
-    );
-
-    sales[key].quantity += quantity;
-    sales[key].revenue += Number(charge.amount) || 0;
-    sales[key].orders += 1;
-  });
-
-  const rankedSales = Object.values(sales).sort((a, b) =>
+  const rankedSales = buildSalesReport(paidCharges, products).sort((a, b) =>
     b.quantity - a.quantity || b.revenue - a.revenue
   );
 
@@ -953,7 +1059,6 @@ function renderReports() {
     item => item.score > 0
   ) ? "none" : "block";
 }
-
 // EXPORTAR PLANILHA
 function exportReportsCSV() {
   if (!isAuthenticated()) return;
@@ -964,32 +1069,7 @@ function exportReportsCSV() {
     charge => charge.paid
   );
 
-  const sales = {};
-
-  paidCharges.forEach(charge => {
-    const product = getChargeProduct(charge, products);
-
-    if (!product) return;
-
-    const key = String(product.id);
-
-    if (!sales[key]) {
-      sales[key] = {
-        name: product.name,
-        quantity: 0,
-        revenue: 0,
-        orders: 0
-      };
-    }
-
-    sales[key].quantity += Math.max(
-      1,
-      Number(charge.quantity) || 1
-    );
-
-    sales[key].revenue += Number(charge.amount) || 0;
-    sales[key].orders += 1;
-  });
+  const sales = buildSalesReport(paidCharges, products);
 
   const interest = getInterestData();
 
@@ -1070,10 +1150,7 @@ document.getElementById("export-reports")?.addEventListener(
   exportReportsCSV
 );
 
-// =====================================
 // GERAR EXTRATO DE VENDA EM PDF
-// =====================================
-
 function generateChargePDF(charge) {
   if (!isAuthenticated()) return;
 
@@ -1261,6 +1338,14 @@ function generateChargePDF(charge) {
           <div class="description">${escapeReceipt(
             charge.description || "Venda na Parfum Vidigal"
           )}</div>
+
+          <h3>Perfumes vendidos</h3>
+
+          <div class="description">${escapeReceipt(
+            getChargeProducts(charge, getProducts()).map(item =>
+              item.product.name + " - " + item.quantity + " unidade(s)"
+            ).join("\n") || "Perfumes não informados"
+          )}</div>
         </div>
 
         <div class="total">
@@ -1293,10 +1378,7 @@ function generateChargePDF(charge) {
   receiptWindow.document.close();
 }
 
-// =====================================
 // INICIALIZAÇÃO
-// =====================================
-
 if (isAuthenticated()) {
   showAdmin();
 } else {
