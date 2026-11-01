@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administração | Parfum Vidigal</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f4f4; color: #222; }
+    header { background: #111; color: white; padding: 18px 25px; display: none; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    header h2 { color: white; }
+    header a, header button { color: white; background: #9c7844; border: none; padding: 10px 15px; text-decoration: none; cursor: pointer; border-radius: 5px; }
+    main { display: none; max-width: 1100px; margin: 30px auto; padding: 20px; }
+    h1, h2 { color: #222; }
+    .login-container, .form-container { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 12px #00000012; margin-bottom: 25px; }
+    .login-container { max-width: 400px; margin: 100px auto; }
+    input, select, textarea { width: 100%; padding: 12px; margin: 8px 0 16px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
+    input[type="file"] { background: #fafafa; }
+    button { background: #9c7844; color: white; border: none; padding: 12px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button:hover { opacity: .85; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .cancel-button, .delete-button { background: #555; margin-left: 5px; }
+    .delete-button { background: #b52c2c; }
+    #image-preview { display: none; max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 8px; margin: 5px 0 15px; border: 1px solid #ddd; }
+    #login-error, #form-message { color: #c62828; margin-top: 10px; }
+    #admin-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .product-card { background: white; border-radius: 9px; padding: 15px; box-shadow: 0 2px 10px #00000012; }
+    .product-card img { width: 100%; height: 190px; object-fit: contain; background: #f8f8f8; border-radius: 5px; }
+    .product-card h3 { margin-bottom: 5px; }
+    .product-card p { color: #555; font-size: 14px; }
+    .admin-menu { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; }
+    .admin-menu a { display: inline-block; background: #222; color: white; padding: 12px 16px; border-radius: 5px; text-decoration: none; }
+    .admin-menu a:hover { background: #9c7844; }
+    .charge-card { background: white; border-radius: 9px; padding: 18px; margin-bottom: 15px; box-shadow: 0 2px 10px #00000012; border-left: 5px solid #c28e36; }
+    .charge-card.paid { border-left-color: #27834b; opacity: .9; }
+    .charge-card h3 { margin: 0 0 8px; }
+    .charge-card p { margin: 7px 0; color: #555; overflow-wrap: anywhere; }
+    .charge-value { font-size: 23px; font-weight: bold; color: #9c7844; margin: 10px 0; }
+    .charge-status { display: inline-block; padding: 6px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin: 5px 0 12px; }
+    .status-pending { background: #fff0d3; color: #98630d; }
+    .status-paid { background: #dff5e6; color: #237342; }
+    .charge-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .whatsapp-button { background: #168b4b; }
+    .paid-button { background: #286b43; }
+    .pending-button { background: #9c7844; }
+    .charge-delete { background: #b52c2c; }
+    .pdf-button { background: #333; }
+    .charge-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .summary-card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 10px #00000010; }
+    .summary-card span { color: #666; font-size: 13px; }
+    .summary-card strong { display: block; font-size: 22px; margin-top: 8px; }
+    #charge-message { margin-top: 12px; font-weight: bold; }
+    .empty-message { background: white; padding: 20px; border-radius: 8px; color: #666; }
+    .report-section { margin-top: 45px; }
+    .report-panel { background: white; padding: 20px; border-radius: 10px; margin: 18px 0; box-shadow: 0 2px 10px #00000010; overflow-x: auto; }
+    .report-table { width: 100%; border-collapse: collapse; min-width: 620px; }
+    .report-table th, .report-table td { padding: 12px; border-bottom: 1px solid #e8e8e8; text-align: left; }
+    .report-table th { background: #f5f0e8; color: #624820; }
+    .report-note { color: #666; font-size: 13px; line-height: 1.5; }
+    .report-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .report-kpi { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 10px #00000010; }
+    .report-kpi span { color: #666; font-size: 13px; }
+    .report-kpi strong { display: block; font-size: 22px; margin-top: 8px; color: #9c7844; }
+    @media (max-width: 600px) {
+      main { padding: 12px; }
+      .login-container { margin: 50px 15px; }
+      .charge-actions button { width: 100%; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="login-container" id="admin-login">
+    <h2>Login do Administrador</h2>
+    <form id="login-form">
+      <label for="admin-password">Senha do administrador</label>
+      <input type="password" id="admin-password" placeholder="Digite sua senha" required>
+      <button type="submit" id="login-button">ENTRAR</button>
+      <p id="login-error"></p>
+    </form>
+  </section>
+
+  <header id="admin-header">
+    <h2>PARFUM VIDIGAL - ADMIN</h2>
+    <div>
+      <a href="index.html">Voltar à loja</a>
+      <button id="logout-button">SAIR</button>
+    </div>
+  </header>
+
+  <main id="admin-main">
+
+    <nav class="admin-menu">
+      <a href="#cadastro">Cadastrar produtos</a>
+      <a href="#produtos">Produtos cadastrados</a>
+      <a href="#cobrancas">Bloco de notas e cobranças</a>
+      <a href="#relatorios">Relatórios</a>
+    </nav>
+
+    <section class="form-container" id="cadastro">
+      <h2 id="form-title">Cadastrar produto</h2>
+
+      <form id="product-form">
+        <input type="hidden" id="edit-id">
+
+        <label for="name">Nome do produto</label>
+        <input type="text" id="name" placeholder="Nome do perfume" required>
+
+        <label for="price">Preço (R$)</label>
+        <input type="number" id="price" min="0" step="0.01" placeholder="299.90" required>
+
+        <label for="category">Categoria</label>
+        <select id="category" required>
+          <option value="">Selecione</option>
+          <option value="masculino">Masculino</option>
+          <option value="feminino">Feminino</option>
+          <option value="unissex">Unissex</option>
+        </select>
+
+        <label for="image">Foto do produto</label>
+        <input type="file" id="image" accept="image/jpeg,image/png,image/webp">
+        <small>Imagem JPG, PNG ou WEBP. Máximo: 5 MB.</small>
+
+        <br><br>
+        <img id="image-preview" alt="Prévia da foto do produto">
+
+        <label for="stock">Estoque</label>
+        <input type="number" id="stock" min="0" placeholder="Quantidade" required>
+
+        <label for="description">Descrição</label>
+        <textarea id="description" rows="4" placeholder="Descrição do produto"></textarea>
+
+        <button type="submit" id="save-button">SALVAR PRODUTO</button>
+        <button type="button" id="cancel-edit" class="cancel-button" style="display:none;">CANCELAR</button>
+
+        <p id="form-message"></p>
+      </form>
+    </section>
+
+    <section id="produtos">
+      <h2>Produtos cadastrados</h2>
+      <div id="admin-products"></div>
+    </section>
+
+    <section id="cobrancas" style="margin-top:45px;">
+      <h2>Bloco de Notas e Cobranças</h2>
+      <p>Cadastre seus clientes, registre valores pendentes e envie cobranças pelo WhatsApp.</p>
+
+      <div class="charge-summary">
+        <div class="summary-card">
+          <span>Total pendente</span>
+          <strong id="total-pending">R$ 0,00</strong>
+        </div>
+
+        <div class="summary-card">
+          <span>Total recebido</span>
+          <strong id="total-paid">R$ 0,00</strong>
+        </div>
+
+        <div class="summary-card">
+          <span>Clientes cadastrados</span>
+          <strong id="total-clients">0</strong>
+        </div>
+      </div>
+
+      <div class="form-container">
+        <h2>Nova anotação / Cobrança</h2>
+
+        <form id="charge-form">
+          <label for="client-name">Nome do cliente</label>
+          <input type="text" id="client-name" placeholder="Nome completo" required>
+
+          <label for="client-phone">WhatsApp com DDD</label>
+          <input type="tel" id="client-phone" placeholder="Ex.: (27) 99999-9999" required>
+
+          <label for="charge-amount">Valor da cobrança (R$)</label>
+          <input type="number" id="charge-amount" min="0.01" step="0.01" placeholder="150.00" required>
+
+          <label for="charge-description">Anotação / Descrição</label>
+          <textarea id="charge-description" rows="4" placeholder="Ex.: Compra do perfume. Pagamento combinado para dia 10."></textarea>
+
+          <button type="submit" id="charge-save-button">SALVAR COBRANÇA</button>
+          <p id="charge-message"></p>
+        </form>
+      </div>
+
+      <h2>Clientes e cobranças registradas</h2>
+      <div id="charge-list"></div>
+    </section>
+
+    <section id="relatorios" class="report-section">
+      <h2>Relatórios de Vendas</h2>
+      <p>As vendas abaixo consideram somente cobranças marcadas como pagas.</p>
+
+      <div class="report-kpis">
+        <div class="report-kpi">
+          <span>Faturamento recebido</span>
+          <strong id="report-paid-total">R$ 0,00</strong>
+        </div>
+
+        <div class="report-kpi">
+          <span>Cobranças pagas</span>
+          <strong id="report-paid-orders">0</strong>
+        </div>
+      </div>
+
+      <div class="report-panel">
+        <h3>Produtos mais vendidos</h3>
+        <p class="report-note">
+          O ranking usa o produto e a quantidade informados ao cadastrar a cobrança.
+          Cobranças antigas são identificadas pela descrição quando possível.
+        </p>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Posição</th>
+              <th>Produto</th>
+              <th>Unidades</th>
+              <th>Vendas pagas</th>
+              <th>Faturamento</th>
+            </tr>
+          </thead>
+          <tbody id="report-sales-body"></tbody>
+        </table>
+
+        <p id="report-sales-empty" class="empty-message">
+          Ainda não há vendas pagas identificadas por produto.
+        </p>
+      </div>
+
+      <div class="report-panel">
+        <h3>Produtos mais procurados</h3>
+        <p class="report-note">
+          A loja registra visualizações dos cards, pesquisas que correspondem ao nome
+          de um perfume e cliques em “Adicionar ao carrinho”.
+        </p>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Posição</th>
+              <th>Produto</th>
+              <th>Visualizações</th>
+              <th>Pesquisas</th>
+              <th>Cliques</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="report-interest-body"></tbody>
+        </table>
+
+        <p id="report-interest-empty" class="empty-message">
+          Os dados de interesse começarão a aparecer depois que a loja atualizada receber visitas.
+        </p>
+      </div>
+
+      <button type="button" id="export-reports">BAIXAR PLANILHA (CSV / EXCEL)</button>
+
+      <p class="report-note">
+        A planilha CSV abre no Excel e no Google Planilhas.
+        Os dados são armazenados no navegador usado para acessar a loja e o painel.
+      </p>
+    </section>
+
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

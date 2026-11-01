@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARFUMVIDIGAL | Perfumaria Premium</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">PARFUM<span>VIDIGAL</span></div>
+
+  <nav>
+    <a href="#inicio">Início</a>
+    <a href="#produtos">Perfumes</a>
+    <a href="#sobre">Sobre nós</a>
+    <a href="admin.html">Login</a>
+  </nav>
+
+  <button class="cart-button" onclick="toggleCart()">
+    🛍 Carrinho (<span id="cart-count">0</span>)
+  </button>
+</header>
+
+<section class="hero" id="inicio">
+  <div class="hero-content">
+    <p class="subtitle">A ESSÊNCIA DA ELEGÂNCIA</p>
+    <h1>Sua essência.<br><span>Sua identidade.</span></h1>
+    <p>Descubra fragrâncias exclusivas que revelam sua personalidade.</p>
+    <a href="#produtos" class="btn">EXPLORAR PERFUMES</a>
+  </div>
+</section>
+
+<section class="products" id="produtos">
+  <p class="subtitle">NOSSA COLEÇÃO</p>
+  <h2>Perfumes selecionados</h2>
+
+  <div class="filters">
+    <input id="search" type="text" placeholder="Buscar perfume...">
+    <select id="category">
+      <option value="todos">Todas as categorias</option>
+      <option value="masculino">Masculinos</option>
+      <option value="feminino">Femininos</option>
+      <option value="unissex">Unissex</option>
+    </select>
+  </div>
+
+  <div class="product-grid" id="product-list"></div>
+</section>
+
+<section class="banner" id="sobre">
+  <p class="subtitle">PARFUMVIDIGAL</p>
+  <h2>Mais que um perfume,<br>uma marca registrada.</h2>
+  <p>Fragrâncias para momentos inesquecíveis.</p>
+</section>
+
+<footer>
+  <h2>PARFUM<span>VIDIGAL</span></h2>
+  <p>O luxo está na sua essência.</p>
+  <p>© 2026 PARFUMVIDIGAL - Todos os direitos reservados.</p>
+</footer>
+
+<div class="cart-panel" id="cart">
+  <button class="close" onclick="toggleCart()">✕</button>
+  <h2>Seu carrinho</h2>
+  <div id="cart-items"></div>
+  <h3>Total: <span id="cart-total">R$ 0,00</span></h3>
+  <button class="btn checkout" onclick="checkout()">FINALIZAR PEDIDO</button>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
